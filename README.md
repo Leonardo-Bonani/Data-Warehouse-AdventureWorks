@@ -1,6 +1,6 @@
 #  Recriando o Modulo Inventory do Data Warehouse AdventureWork 2022. 
 
-📌 1. Objetivo do projeto
+📌 **1. Objetivo do projeto**
 
 Construir um Data Warehouse para o módulo Inventory do AdventureWorks 2022, replicando o fluxo OLTP → DW para permitir análises históricas e métricas de inventário de modo simplificado.
 
@@ -14,16 +14,16 @@ Este projeto foi desenvolvido com foco em:
 
 ---
 
-📌 2. Ferramentas Utilizadas
+📌 **2. Ferramentas Utilizadas**
 
-- **SQL Server**
-- **SQL Server Management Studio (SSMS)**
-- **AdventureWorks 2022 OLTP**
+- SQL Server
+- SQL Server Management Studio (SSMS)
+- AdventureWorks 2022 OLTP (disponivel em :https://github.com/Microsoft/sql-server-samples/releases/download/adventureworks/AdventureWorks2022.bak)
 
 
 ---
 
-📌 3. Arquitetura do Projeto
+📌 **3. Arquitetura do Projeto**
 
 O DW foi construído seguindo um modelo dimensional no formato Star Schema, porém com características de Snowflake também, por conta da hierarquia de produtos.
 
@@ -36,21 +36,21 @@ Tabelas de Dimensão:
 Tabela de Fato:
 - FactProductInventory
 
-![Resultado final do Modelo Dimensional](<img width="1219" height="733" alt="Screenshot 2025-12-02 155045" src="https://github.com/user-attachments/assets/cdacfc2a-3f93-4b27-9dcc-86480d2bffe5" />)
+![Resultado final do Modelo Dimensional](./docs/ModeloDimensional.png)
 
 
 ---
 
 
-📌 4. Etapas
+📌 **4. Etapas**
 
-4.1 Localização e seleção dos dados no OLTP para compor o DW. 
+**4.1 Localização e seleção dos dados no OLTP para compor o DW. **
 
-- Estudar a estrutura do DW original no Adventure Works disponivel em: https://dataedo.com/samples/html/Data_warehouse/
-- Mapear quais tabelas do OLTP continham dados relevantes para a contrução do modulo Inventory.
-- Identificar as chaves primárias e relacionamentos existentes no modelo transacional.
+- A estrutura do Data Warehouse original do AdventureWorks foi analisada usando como referencia: https://dataedo.com/samples/html/Data_warehouse/
+- As tabelas do OLTP com dados relevantes para a construção do módulo Inventory foram mapeadas.
+- Chaves primárias e os relacionamentos do modelo transacional foram identificados.
 
-4.2 Criação da tabela DimDate
+**4.2 Criação da tabela DimDate**
 
 A primeira estrutura criada foi a DimDate, responsável por padronizar todas as datas usadas no DW.
 
@@ -70,7 +70,7 @@ CREATE TABLE dbo.DimDate (
 ```
 
 
-4.3 Criação das tabelas de Staging (STG)
+**4.3 Criação das tabelas de Staging (STG)**
 
 Foram criadas tabelas intermediárias (staging) para as Dimensões para receber os dados brutos vindos do OLTP.
 Essas tabelas serviram como camada temporária para armazenar, padronizar e validar os dados antes de carregá-los no DW.
@@ -92,12 +92,30 @@ CREATE TABLE stg.DimProduct (
 
 ```
 
-4.4 Criação das tabelas finais do Data Warehouse
+**4.4 Criação das tabelas finais do Data Warehouse**
 
 Após a camada STG, foram criadas as tabelas dimensionais finais.
-Essas tabelas foram preparadas com suas surrogate keys, tipos de dados definitivos e estrutura final do Schema.
+Essas tabelas foram preparadas com suas surrogate keys, tipos de dados definitivos e a estrutura final do Schema.
 
-4.5 Transformação e carga das tabelas STG
+Exemplo resumido da estrutura da DimProduct:
+
+```sql
+
+CREATE TABLE dbo.DimProduct (
+    ProductKey INT IDENTITY(1,1) PRIMARY KEY,
+    ProductAlternateKey NVARCHAR(25) NOT NULL,
+    ProductSubcategoryKey INT NULL,
+    EnglishProductName NVARCHAR(50) NULL,
+    Color NVARCHAR(15) NULL,
+    StandardCost MONEY NULL,
+    SellStartDate DATETIME NULL,
+    SellEndDate DATETIME NULL,
+    Status NVARCHAR(20) NULL
+);
+
+```
+
+**4.5 Transformação e carga das tabelas STG**
 
 Os dados foram carregados na camada STG utilizando processos de transform/load, incluindo:
 
@@ -146,9 +164,9 @@ LEFT JOIN (
 
 ```
 
-4.6 Carga das Dimensões usando MERGE
+**4.6 Carga das Dimensões usando MERGE**
 
-Com as tabelas STG prontas, para realmente simular um DW sendo atualizado com novos dados, as dimensões finais foram alimentadas usando comandos MERGE, permitindo:
+Com as tabelas STG prontas, para realmente simular um DW sendo atualizado com novos dados, as dimensões finais foram alimentadas usando comandos MERGE, que permite:
 
 - Inserir registros novos
 - Evitar duplicidades
@@ -194,7 +212,7 @@ WHEN NOT MATCHED THEN
 
 ```
 
-4.7 Criação e carga da tabela de fato (FactProductInventory)
+**4.7 Criação e carga da tabela de fato (FactProductInventory)**
 
 Diferente das dimensões, a Fact foi criada sem passar pela camada STG, para simplificar o processo.
 Ela foi carregada diretamente com um INSERT + JOIN entre:
@@ -223,7 +241,7 @@ ORDER BY dp.ProductKey, dd.DateKey;
 
 ```
 
-4.8 Criação dos relacionamentos
+**4.8 Criação dos relacionamentos**
 
 Por fim, foram criados os relacionamentos entre:
 
@@ -249,7 +267,7 @@ ADD CONSTRAINT FK_FactProductInventory_Date
 ---
 
 
-📌 5. Regras de Negócio
+📌 **5. Regras de Negócio**
 
 - Cada movimento pertence a um produto (ProductKey)
 - Cada movimento pertence a um dia específico (DateKey)
@@ -258,13 +276,13 @@ ADD CONSTRAINT FK_FactProductInventory_Date
 ---
 
 
-📌 6. Decisões de Modelagem
+📌 **6. Decisões de Modelagem**
 
 - Colunas de tradução (Spanish, French, etc) como NULL nas dimensões: para reduzir volume e manter o foco apenas nos atributos necessários ao entendimento do fluxo ETL.
-- Colunas NULL na Fact: refletindo ausência de dados completos no OLTP e para simplificar a modelagem, mas mantendo consistência com o propósito do projeto.
+- Colunas NULL na Fact: refletindo ausência de dados completos no OLTP e para simplificar a modelagem, mas mantendo consistência do projeto.
 
 
-📌 7. Validações Realizadas
+📌 **7. Validações Realizadas**
 
 - Conferência de granularidade da Fact
 - Verificação de schema via `sp_help`
@@ -274,29 +292,31 @@ ADD CONSTRAINT FK_FactProductInventory_Date
 
 ---
 
-📌 8. Estrutura do Repositório
+📌 **8. Estrutura do Repositório**
 
 sql/
-┣ create_tables/
-┃   ┗ create_tables.sql
-┃   ┗ create_tables_stg.sql
-
-┣ load/                      
-┃   ┣ load_stg_dim_product.sql
-┃   ┣ load_stg_dim_product_category.sql
-┃   ┣ load_stg_dim_product_sub_category.sql
-┃   ┣ load_dim_date.sql
-┃   ┗ load_fact_product_inventory.sql
-
-┣ merge/                  
-┃   ┣ merge_dim_product.sql
-┃   ┣ merge_dim_product_category.sql
-┃   ┗ merge_dim_product_sub_category.sql
-
+│
+├── create_tables/
+│   ├── create_tables.sql
+│   └── create_tables_stg.sql
+│
+├── load/
+│   ├── load_stg_dim_product.sql
+│   ├── load_stg_dim_product_category.sql
+│   ├── load_stg_dim_product_sub_category.sql
+│   ├── load_dim_date.sql
+│   └── load_fact_product_inventory.sql
+│
+├── merge/
+│   ├── merge_dim_product.sql
+│   ├── merge_dim_product_category.sql
+│   └── merge_dim_product_sub_category.sql
+│
+└──
 
 ---
 
-📌 9. Aprendizados
+📌 **9. Aprendizados**
 
 Durante o desenvolvimento deste DW, aprendi e pratiquei:
 
@@ -312,23 +332,23 @@ Durante o desenvolvimento deste DW, aprendi e pratiquei:
 
 ---
 
-📌 10. Próximos Passos
+📌 **10. Próximos Passos**
 
 - Expandir o DW para incluir novos módulos do AdventureWorks
 - Criar dashboards analíticos (Power BI / Tableau) consumindo este DW
 
 ---
 
-📌 11. Referências
+📌 **11. Referências**
 
  https://dataedo.com/samples/html/Data_warehouse/
 
 
 ---
 
-📌 12. Autor
-**Leonardo Bonani** 
- Contato: *www.linkedin.com/in/leonardo-bonani - leonardo_bonani@hotmail.com *
+📌 **12. Autor**
+Leonardo Bonani
+Contato: www.linkedin.com/in/leonardo-bonani
 
 ---
 
