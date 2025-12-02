@@ -36,7 +36,7 @@ Tabelas de Dimensão:
 Tabela de Fato:
 - FactProductInventory
 
-![Resultado final do Modelo Dimensional](./docs/ModeloDimensional.png)
+![Resultado final do Modelo Dimensional](./docs/Modelo20Dimensional.png)
 
 
 ---
@@ -294,6 +294,7 @@ ADD CONSTRAINT FK_FactProductInventory_Date
 
 📌 **8. Estrutura do Repositório**
 
+<pre> ```
 sql/
 │
 ├── create_tables/
@@ -313,6 +314,8 @@ sql/
 │   └── merge_dim_product_sub_category.sql
 │
 └──
+    
+``` </pre>
 
 ---
 
@@ -347,7 +350,8 @@ Durante o desenvolvimento deste DW, aprendi e pratiquei:
 ---
 
 📌 **12. Autor**
-Leonardo Bonani
+
+Leonardo Bonani<br>
 Contato: www.linkedin.com/in/leonardo-bonani
 
 ---
