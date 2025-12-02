@@ -1,0 +1,21 @@
+CREATE TABLE dbo.DimDate (
+    DateKey INT NOT NULL PRIMARY KEY,
+    FullDateAlternateKey DATE NOT NULL,
+    DayNumberOfWeek TINYINT NOT NULL,
+    EnglishDayNameOfWeek NVARCHAR(10) NOT NULL,
+    SpanishDayNameOfWeek NVARCHAR(10),
+    FrenchDayNameOfWeek NVARCHAR(10),
+    DayNumberOfMonth TINYINT NOT NULL,
+    DayNumberOfYear SMALLINT NOT NULL,
+    WeekNumberOfYear TINYINT NOT NULL,
+    EnglishMonthName NVARCHAR(10) NOT NULL,
+    SpanishMonthName NVARCHAR(10),
+    FrenchMonthName NVARCHAR(10),
+    MonthNumberOfYear TINYINT NOT NULL,
+    CalendarQuarter TINYINT NOT NULL,
+    CalendarYear SMALLINT NOT NULL,
+    CalendarSemester TINYINT NOT NULL,
+    FiscalQuarter TINYINT NOT NULL,
+    FiscalYear SMALLINT NOT NULL,
+    FiscalSemester TINYINT NOT NULL
+);
