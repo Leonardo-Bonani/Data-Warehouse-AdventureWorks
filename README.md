@@ -36,39 +36,68 @@ Tabelas de Dimensão:
 Tabela de Fato:
 - FactProductInventory
 
-flowchart LR
-    FactProductInventory --> DimProduct
-    FactProductInventory --> DimDate
-    DimProduct --> DimProductSubcategory
-    DimProductSubcategory --> DimProductCategory
-    
+![Resultado final do Modelo Dimensional](<img width="1219" height="733" alt="Screenshot 2025-12-02 155045" src="https://github.com/user-attachments/assets/cdacfc2a-3f93-4b27-9dcc-86480d2bffe5" />)
+
+
 ---
 
 
 📌 4. Etapas
 
-Processo de ETL
-O processo de carga do DW foi estruturado seguindo uma sequência lógica e simples, priorizando clareza e organização:
+4.1 Localização e seleção dos dados no OLTP para compor o DW. 
 
-4.1 Estudo da Criação da tabela DimDate
+- Estudar a estrutura do DW original no Adventure Works disponivel em: https://dataedo.com/samples/html/Data_warehouse/
+- Mapear quais tabelas do OLTP continham dados relevantes para a contrução do modulo Inventory.
+- Identificar as chaves primárias e relacionamentos existentes no modelo transacional.
+
+4.2 Criação da tabela DimDate
 
 A primeira estrutura criada foi a DimDate, responsável por padronizar todas as datas usadas no DW.
-Ela foi populada inicialmente com todo o calendário necessário para suportar a Fact.
 
-4.2 Criação das tabelas de Staging (STG)
+Exemplo resumido da estrutura:
+
+```sql
+
+CREATE TABLE dbo.DimDate (
+    DateKey INT PRIMARY KEY,
+    FullDate DATE NOT NULL,
+    DayNumberOfWeek TINYINT,
+    DayNumberOfMonth TINYINT,
+    MonthNumberOfYear TINYINT,
+    CalendarYear SMALLINT
+);
+
+```
+
+
+4.3 Criação das tabelas de Staging (STG)
 
 Foram criadas tabelas intermediárias (staging) para as Dimensões para receber os dados brutos vindos do OLTP.
 Essas tabelas serviram como camada temporária para armazenar, padronizar e validar os dados antes de carregá-los no DW.
-Durante a etapa de preparação das tabelas STG, foi necessário identificar onde cada informação estava armazenada no banco OLTP.
-Realizar joins entre as tabelas do OLTP para reconstruir informações que estavam normalizadas para uso no DW.
 
+Exemplo resumido da estrutura da STG de DimProduct:
 
-4.3 Criação das tabelas finais do Data Warehouse
+```sql
+
+CREATE TABLE stg.DimProduct (
+    ProductAlternateKey NVARCHAR(25) NOT NULL,
+    ProductSubcategoryKey INT NULL,
+    EnglishProductName NVARCHAR(50) NULL,
+    Color NVARCHAR(15) NULL,
+    StandardCost MONEY NULL,
+    SellStartDate DATETIME NULL,
+    SellEndDate DATETIME NULL,
+    Status NVARCHAR(20) NULL
+);
+
+```
+
+4.4 Criação das tabelas finais do Data Warehouse
 
 Após a camada STG, foram criadas as tabelas dimensionais finais.
 Essas tabelas foram preparadas com suas surrogate keys, tipos de dados definitivos e estrutura final do Schema.
 
-4.4 Transformação e carga das tabelas STG
+4.5 Transformação e carga das tabelas STG
 
 Os dados foram carregados na camada STG utilizando processos de transform/load, incluindo:
 
@@ -77,7 +106,47 @@ Os dados foram carregados na camada STG utilizando processos de transform/load, 
 - Padronização de dados
 - Preparação para integridade referencial
 
-4.5 Carga das Dimensões usando MERGE
+Exemplo resumido do Load da DimProduct:
+
+```sql
+
+DECLARE @LoadDate DATETIME = GETDATE();
+INSERT INTO dbo.stg_DimProduct (
+    ProductAlternateKey,
+    ProductSubcategoryKey,
+    StandardCost,
+    FinishedGoodsFlag,
+    Color,
+    ListPrice,
+    SellStartDate,
+    SellEndDate
+)
+SELECT
+    p.ProductNumber,
+    p.ProductSubcategoryID,
+    p.StandardCost,
+    p.FinishedGoodsFlag,
+    p.Color,
+    p.ListPrice,
+    p.SellStartDate,
+    p.SellEndDate,
+    CASE 
+        WHEN p.SellEndDate < @LoadDate THEN 'Discontinued'
+        ELSE 'Current'
+    END
+FROM Production.Product p
+LEFT JOIN Production.ProductModel pm 
+       ON p.ProductModelID = pm.ProductModelID
+LEFT JOIN (
+    SELECT pp.ProductID, pph.LargePhoto
+    FROM Production.ProductProductPhoto pp
+    JOIN Production.ProductPhoto pph 
+         ON pp.ProductPhotoID = pph.ProductPhotoID
+) ph ON p.ProductID = ph.ProductID;
+
+```
+
+4.6 Carga das Dimensões usando MERGE
 
 Com as tabelas STG prontas, para realmente simular um DW sendo atualizado com novos dados, as dimensões finais foram alimentadas usando comandos MERGE, permitindo:
 
@@ -85,7 +154,47 @@ Com as tabelas STG prontas, para realmente simular um DW sendo atualizado com no
 - Evitar duplicidades
 - Sincronizar as dimensões com as tabelas de origem
 
-4.6 Criação e carga da tabela de fato (FactProductInventory)
+Exemplo resumido do MERGE da DimProduct:
+
+```sql
+
+MERGE DimProduct AS tgt
+USING stg.DimProduct AS src
+    ON tgt.ProductAlternateKey = src.ProductAlternateKey
+
+WHEN MATCHED THEN
+    UPDATE SET
+        tgt.ProductSubcategoryKey = src.ProductSubcategoryKey,
+        tgt.EnglishProductName    = src.EnglishProductName,
+        tgt.Color                 = src.Color,
+        tgt.StandardCost          = src.StandardCost,
+        tgt.Status                = src.Status
+
+WHEN NOT MATCHED THEN
+    INSERT (
+        ProductAlternateKey,
+        ProductSubcategoryKey,
+        EnglishProductName,
+        Color,
+        StandardCost,
+        StartDate,
+        EndDate,
+        Status
+    )
+    VALUES (
+        src.ProductAlternateKey,
+        src.ProductSubcategoryKey,
+        src.EnglishProductName,
+        src.Color,
+        src.StandardCost,
+        GETDATE(),
+        '9999-12-31',
+        'Current'
+    );
+
+```
+
+4.7 Criação e carga da tabela de fato (FactProductInventory)
 
 Diferente das dimensões, a Fact foi criada sem passar pela camada STG, para simplificar o processo.
 Ela foi carregada diretamente com um INSERT + JOIN entre:
@@ -93,20 +202,54 @@ Ela foi carregada diretamente com um INSERT + JOIN entre:
 - DimProduct
 - DimDate
 
+Exemplo resumido da Carga da Fact:
 
-4.7 Criação dos relacionamentos (Star Schema)
+```sql
+
+INSERT INTO dbo.FactProductInventory
+(
+    ProductKey,
+    DateKey,
+    MovementDate
+)
+SELECT 
+    dp.ProductKey,
+    dd.DateKey,
+    dd.FullDateAlternateKey AS MovementDate
+FROM dbo.DimProduct dp
+CROSS JOIN dbo.DimDate dd
+WHERE dd.FullDateAlternateKey BETWEEN '2010-01-01' AND '2014-12-31'
+ORDER BY dp.ProductKey, dd.DateKey;
+
+```
+
+4.8 Criação dos relacionamentos
 
 Por fim, foram criados os relacionamentos entre:
 
-- FactProductInventory → DimProduct
-- FactProductInventory → DimDate
-- DimProduct → DimProductSubcategory
-- DimProductSubcategory → DimProductCategory
+- FactProductInventory -> DimProduct
+- FactProductInventory -> DimDate
+- DimProduct -> DimProductSubcategory
+- DimProductSubcategory -> DimProductCategory
+
+Exemplo do relacionamento - DimDate <- FactProductInventory -> DimProduct:
+
+```sql
+
+ALTER TABLE dbo.FactProductInventory
+ADD CONSTRAINT FK_FactProductInventory_Product
+    FOREIGN KEY (ProductKey) REFERENCES dbo.DimProduct(ProductKey);
+
+ALTER TABLE dbo.FactProductInventory
+ADD CONSTRAINT FK_FactProductInventory_Date
+    FOREIGN KEY (DateKey) REFERENCES dbo.DimDate(DateKey);
+
+```
 
 ---
 
 
-📌 5 Regras de Negócio
+📌 5. Regras de Negócio
 
 - Cada movimento pertence a um produto (ProductKey)
 - Cada movimento pertence a um dia específico (DateKey)
@@ -115,13 +258,13 @@ Por fim, foram criados os relacionamentos entre:
 ---
 
 
-📌 6 Decisões de Modelagem
+📌 6. Decisões de Modelagem
 
 - Colunas de tradução (Spanish, French, etc) como NULL nas dimensões: para reduzir volume e manter o foco apenas nos atributos necessários ao entendimento do fluxo ETL.
 - Colunas NULL na Fact: refletindo ausência de dados completos no OLTP e para simplificar a modelagem, mas mantendo consistência com o propósito do projeto.
 
 
-📌 7 Validações Realizadas
+📌 7. Validações Realizadas
 
 - Conferência de granularidade da Fact
 - Verificação de schema via `sp_help`
@@ -131,7 +274,7 @@ Por fim, foram criados os relacionamentos entre:
 
 ---
 
-📌 8 Estrutura do Repositório
+📌 8. Estrutura do Repositório
 
 sql/
 ┣ create_tables/
@@ -153,7 +296,7 @@ sql/
 
 ---
 
-📌 9 Aprendizados
+📌 9. Aprendizados
 
 Durante o desenvolvimento deste DW, aprendi e pratiquei:
 
@@ -169,21 +312,23 @@ Durante o desenvolvimento deste DW, aprendi e pratiquei:
 
 ---
 
-📌 10 Próximos Passos
+📌 10. Próximos Passos
 
-- Adicionar mais módulos do AdventureWorks
+- Expandir o DW para incluir novos módulos do AdventureWorks
+- Criar dashboards analíticos (Power BI / Tableau) consumindo este DW
 
+---
 
-📌 11 Referências
+📌 11. Referências
 
  https://dataedo.com/samples/html/Data_warehouse/
 
 
 ---
 
-📌 12 Autor
+📌 12. Autor
 **Leonardo Bonani** 
- Contato: *www.linkedin.com/in/leonardo-bonani - leonardo_bonani@hotmail.com **  
+ Contato: *www.linkedin.com/in/leonardo-bonani - leonardo_bonani@hotmail.com *
 
 ---
 
