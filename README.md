@@ -36,7 +36,7 @@ Tabelas de Dimensão:
 Tabela de Fato:
 - FactProductInventory
 
-![Resultado final do Modelo Dimensional]("./docs/Modelo Dimensional.png")
+![Resultado final do Modelo Dimensional](./docs/Modelo_Dimensional.png)
 
 
 
@@ -295,7 +295,7 @@ ADD CONSTRAINT FK_FactProductInventory_Date
 
 📌 **8. Estrutura do Repositório**
 
-<pre> ```
+<pre> 
 sql/
 │
 ├── create_tables/
@@ -316,7 +316,7 @@ sql/
 │
 └──
     
-``` </pre>
+ </pre>
 
 ---
 
