@@ -37,13 +37,24 @@
             margin-top: 48px;
             margin-bottom: 16px;
         }
-
+        h1::after, h2::after, h3::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            height: 2px;
+            background-color: rgba(0,0,0,0.12);
+            border-radius: 2px;
+        }
+        
         h1 {    
             box-sizing: border-box;
-            display: inline;
             font-size: 42px; 
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
+
+        h1::after { width: 60px; }
+
 
         h2 {
             font-size: 32px;
@@ -51,11 +62,17 @@
             margin-bottom: 15px;
         }
 
+        h2::after { width: 45px; }
+
+
         h3 {
-            font-size: 30px;
+            font-size: 26px;
             margin-top: 20px;
             margin-bottom: 10px;
         }
+
+        h3::after { width: 40px; }
+
 
         p {
             margin-bottom: 15px;
@@ -105,8 +122,6 @@
             margin-bottom: 40px;
         }
 
-        .emoji {
-            margin-right: 5px;
         }
     </style>
 </head>
@@ -115,7 +130,7 @@
 <h1>Recriando o Módulo Inventory do Data Warehouse AdventureWorks 2022</h1>
 
 <div class="section">
-    <h2><span class="emoji">📌</span>1. Objetivo do projeto</h2>
+    <h2>1. Objetivo do projeto</h2>
     <p>Construir um Data Warehouse para o módulo Inventory do AdventureWorks 2022, replicando o fluxo OLTP → DW para permitir análises históricas e métricas de inventário de modo simplificado.</p>
     <p>Este projeto foi desenvolvido com foco em:</p>
     <ul>
@@ -129,7 +144,7 @@
 </div>
 
 <div class="section">
-    <h2><span class="emoji">📌</span>2. Ferramentas Utilizadas</h2>
+    <h2>2. Ferramentas Utilizadas</h2>
     <ul>
         <li>SQL Server</li>
         <li>SQL Server Management Studio (SSMS)</li>
@@ -138,7 +153,7 @@
 </div>
 
 <div class="section">
-    <h2><span class="emoji">📌</span>3. Arquitetura do Projeto</h2>
+    <h2>3. Arquitetura do Projeto</h2>
     <p>O DW foi construído seguindo um modelo dimensional no formato Star Schema, porém com características de Snowflake também, por conta da hierarquia de produtos.</p>
     <p><strong>Tabelas de Dimensão:</strong></p>
     <ul>
@@ -155,7 +170,7 @@
 </div>
 
 <div class="section">
-    <h2><span class="emoji">📌</span>4. Etapas</h2>
+    <h2>4. Etapas</h2>
 
     <h3>4.1 Localização e seleção dos dados no OLTP para compor o DW</h3>
     <ul>
@@ -165,7 +180,7 @@
     </ul>
 
     <h3>4.2 Criação da tabela DimDate</h3>
-    <p>A primeira estrutura criada foi a DimDate, responsável por padronizar todas as datas usadas no DW.</p><br>
+    <p>A primeira estrutura criada foi a DimDate, responsável por padronizar todas as datas usadas no DW.</p>
     <p>Exemplo resumido da estrutura:</p>
     <pre><code class="language-sql">
     CREATE TABLE dbo.DimDate (
@@ -178,8 +193,8 @@
 );</code></pre>
 
     <h3>4.3 Criação das tabelas de Staging (STG)</h3>
-    <p>Foram criadas tabelas intermediárias (staging) para as Dimensões para receber os dados brutos vindos do OLTP.</p><br>
-    <p>Essas tabelas serviram como camada temporária para armazenar, padronizar e validar os dados antes de carregá-los no DW.</p><br>
+    <p>Foram criadas tabelas intermediárias (staging) para as Dimensões para receber os dados brutos vindos do OLTP.</p>
+    <p>Essas tabelas serviram como camada temporária para armazenar, padronizar e validar os dados antes de carregá-los no DW.</p>
     <p>Exemplo resumido da estrutura da STG de DimProduct:</p>
     <pre><code class="language-sql">
     CREATE TABLE stg.DimProduct (
@@ -194,8 +209,8 @@
 );</code></pre>
 
     <h3>4.4 Criação das tabelas finais do Data Warehouse</h3>
-    <p>Após a camada STG, foram criadas as tabelas dimensionais finais. Essas tabelas foram preparadas com suas surrogate keys, tipos de dados definitivos e a estrutura final do Schema.</p><br>
-    <p>Exemplo resumido da estrutura da DimProduct:</p><br>
+    <p>Após a camada STG, foram criadas as tabelas dimensionais finais. Essas tabelas foram preparadas com suas surrogate keys, tipos de dados definitivos e a estrutura final do Schema.</p>
+    <p>Exemplo resumido da estrutura da DimProduct:</p>
     <pre><code class="language-sql">
     CREATE TABLE dbo.DimProduct (
     ProductKey INT IDENTITY(1,1) PRIMARY KEY,
@@ -210,7 +225,7 @@
 );</code></pre>
 
     <h3>4.5 Transformação e carga das tabelas STG</h3>
-    <p>Os dados foram carregados na camada STG utilizando processos de transform/load, incluindo:</p><br>
+    <p>Os dados foram carregados na camada STG utilizando processos de transform/load, incluindo:</p>
     <ul>
         <li>Ajuste de tipos</li>
         <li>Seleção das colunas relevantes</li>
@@ -255,7 +270,7 @@
     ) ph ON p.ProductID = ph.ProductID;</code></pre>
 
     <h3>4.6 Carga das Dimensões usando MERGE</h3>
-    <p>Com as tabelas STG prontas, para realmente simular um DW sendo atualizado com novos dados, as dimensões finais foram alimentadas usando comandos MERGE, que permite:</p><br>
+    <p>Com as tabelas STG prontas, para realmente simular um DW sendo atualizado com novos dados, as dimensões finais foram alimentadas usando comandos MERGE, que permite:</p>
     <ul>
         <li>Inserir registros novos</li>
         <li>Evitar duplicidades</li>
@@ -298,7 +313,7 @@
         );</code></pre>
 
     <h3>4.7 Criação e carga da tabela de fato (FactProductInventory)</h3>
-    <p>Diferente das dimensões, a Fact foi criada sem passar pela camada STG, para simplificar o processo. Ela foi carregada diretamente com um INSERT + JOIN entre:</p><br>
+    <p>Diferente das dimensões, a Fact foi criada sem passar pela camada STG, para simplificar o processo. Ela foi carregada diretamente com um INSERT + JOIN entre:</p>
     <ul>
         <li>DimProduct</li>
         <li>DimDate</li>
@@ -322,7 +337,7 @@
     ORDER BY dp.ProductKey, dd.DateKey;</code></pre>
 
     <h3>4.8 Criação dos relacionamentos</h3>
-        <p>Por fim, foram criados os relacionamentos entre:</p><br>
+        <p>Por fim, foram criados os relacionamentos entre:</p>
     <ul>
         <li>FactProductInventory -> DimProduct</li>
         <li>FactProductInventory -> DimDate</li>
@@ -342,7 +357,7 @@
 </div>
 
 <div class="section">
-    <h2><span class="emoji">📌</span>5. Regras de Negócio</h2>
+    <h2>5. Regras de Negócio</h2>
     <ul>
         <li>Cada movimento pertence a um produto (ProductKey)</li>
         <li>Cada movimento pertence a um dia específico (DateKey)</li>
@@ -351,7 +366,7 @@
 </div>
 
 <div class="section">
-    <h2><span class="emoji">📌</span>6. Decisões de Modelagem</h2>
+    <h2>6. Decisões de Modelagem</h2>
     <ul>
         <li>Colunas de tradução (Spanish, French, etc) como NULL nas dimensões para reduzir volume e focar nos atributos necessários ao fluxo ETL.</li>
         <li>Colunas NULL na Fact: refletindo ausência de dados completos no OLTP e para simplificar a modelagem.</li>
@@ -359,7 +374,7 @@
 </div>
 
 <div class="section">
-    <h2><span class="emoji">📌</span>7. Validações Realizadas</h2>
+    <h2>7. Validações Realizadas</h2>
     <ul>
         <li>Conferência de granularidade da Fact</li>
         <li>Verificação de schema via <code>sp_help</code></li>
@@ -371,14 +386,14 @@
 
 <div class="section">
 
-    <h2><span class="emoji">📌</span>8. Repositório</h2>
+    <h2>8. Repositório</h2>
     <p> O repositório com o projeto completo está em:</p><br>
     <p><a href="https://github.com/Leonardo-Bonani/Recriando-o-Modulo-Inventory-do-Data-Warehouse-AdventureWork-2022/tree/main" target="_blank">Recriando o Módulo Inventory do Data Warehouse AdventureWork 2022</a></p>
  
 </div>
 
 <div class="section">
-    <h2><span class="emoji">📌</span>9. Aprendizados</h2>
+    <h2>9. Aprendizados</h2>
     <ul>
         <li>Modelagem dimensional com SQL Server</li>
         <li>Identificar e mapear dados no OLTP para modelar o DW (OLAP)</li>
@@ -392,7 +407,7 @@
 </div>
 
 <div class="section">
-    <h2><span class="emoji">📌</span>10. Próximos Passos</h2>
+    <h2>10. Próximos Passos</h2>
     <ul>
         <li>Expandir o DW para incluir novos módulos do AdventureWorks</li>
         <li>Criar dashboards analíticos (Power BI / Tableau) consumindo este DW</li>
@@ -400,7 +415,7 @@
 </div>
 
 <div class="section">
-    <h2><span class="emoji">📌</span>11. Referências</h2>
+    <h2>11. Referências</h2>
     <ul>
         <li><a href="https://dataedo.com/samples/html/Data_warehouse/" target="_blank">https://dataedo.com/samples/html/Data_warehouse/</a></li>
     </ul>
@@ -408,7 +423,7 @@
 </div>
 
 <div class="section">
-    <h2><span class="emoji">📌</span>12. Autor</h2>
+    <h2>12. Autor</h2>
     <p>Leonardo Bonani<br>
     Contato: <a href="https://www.linkedin.com/in/leonardo-bonani" target="_blank">www.linkedin.com/in/leonardo-bonani</a></p>
 </div>
