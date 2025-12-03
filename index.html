@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Recriando o Modulo Inventory - DW AdventureWorks</title>
+    <style>
+        /* Reset básico */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            background-color: #ffffff;
+            color: #222222;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Georgia', serif;
+            color: #111111;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        h3 {
+            font-size: 1.4em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        pre {
+            background-color: #f6f6f6;
+            padding: 15px;
+            border-left: 4px solid #222222;
+            overflow-x: auto;
+            margin-bottom: 15px;
+        }
+
+        code {
+            font-family: 'Courier New', monospace;
+            background-color: #f6f6f6;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        a {
+            color: #1a0dab;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 20px 0;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #ccc;
+            margin: 30px 0;
+        }
+
+        /* Destaque de seções */
+        .section {
+            margin-bottom: 40px;
+        }
+
+        /* Ícones ou emojis */
+        .emoji {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Recriando o Modulo Inventory do Data Warehouse AdventureWorks 2022</h1>
+
+<div class="section">
+    <h2><span class="emoji">📌</span>1. Objetivo do projeto</h2>
+    <p>Construir um Data Warehouse para o módulo Inventory do AdventureWorks 2022, replicando o fluxo OLTP → DW para permitir análises históricas e métricas de inventário de modo simplificado.</p>
+    <p>Este projeto foi desenvolvido com foco em:</p>
+    <ul>
+        <li>Criar e carregar tabelas de staging (stg_)</li>
+        <li>Criar e carregar tabelas de Dimensão e Fato</li>
+        <li>Aplicar transformações simples para padronização</li>
+        <li>Utilizar MERGE para cargas</li>
+        <li>Implementação de chaves surrogate (SK)</li>
+        <li>Padronização de datas via DimDate</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2><span class="emoji">📌</span>2. Ferramentas Utilizadas</h2>
+    <ul>
+        <li>SQL Server</li>
+        <li>SQL Server Management Studio (SSMS)</li>
+        <li>AdventureWorks 2022 OLTP (<a href="https://github.com/Microsoft/sql-server-samples/releases/download/adventureworks/AdventureWorks2022.bak" target="_blank">link do backup</a>)</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2><span class="emoji">📌</span>3. Arquitetura do Projeto</h2>
+    <p>O DW foi construído seguindo um modelo dimensional no formato Star Schema, porém com características de Snowflake também, por conta da hierarquia de produtos.</p>
+    <p><strong>Tabelas de Dimensão:</strong></p>
+    <ul>
+        <li>DimProduct</li>
+        <li>DimProductSubcategory</li>
+        <li>DimProductCategory</li>
+        <li>DimDate</li>
+    </ul>
+    <p><strong>Tabela de Fato:</strong></p>
+    <ul>
+        <li>FactProductInventory</li>
+    </ul>
+    <img src="./docs/Modelo_Dimensional.png" alt="Resultado final do Modelo Dimensional">
+</div>
+
+<div class="section">
+    <h2><span class="emoji">📌</span>4. Etapas</h2>
+
+    <h3>4.1 Localização e seleção dos dados no OLTP para compor o DW</h3>
+    <ul>
+        <li>A estrutura do Data Warehouse original do AdventureWorks foi analisada usando como referencia: <a href="https://dataedo.com/samples/html/Data_warehouse/" target="_blank">link</a></li>
+        <li>As tabelas do OLTP com dados relevantes para a construção do módulo Inventory foram mapeadas.</li>
+        <li>Chaves primárias e os relacionamentos do modelo transacional foram identificados.</li>
+    </ul>
+
+    <h3>4.2 Criação da tabela DimDate</h3>
+    <p>A primeira estrutura criada foi a DimDate, responsável por padronizar todas as datas usadas no DW.</p>
+    <pre><code>CREATE TABLE dbo.DimDate (
+    DateKey INT PRIMARY KEY,
+    FullDate DATE NOT NULL,
+    DayNumberOfWeek TINYINT,
+    DayNumberOfMonth TINYINT,
+    MonthNumberOfYear TINYINT,
+    CalendarYear SMALLINT
+);</code></pre>
+
+    <h3>4.3 Criação das tabelas de Staging (STG)</h3>
+    <p>Foram criadas tabelas intermediárias (staging) para as Dimensões para receber os dados brutos vindos do OLTP.</p>
+    <pre><code>CREATE TABLE stg.DimProduct (
+    ProductAlternateKey NVARCHAR(25) NOT NULL,
+    ProductSubcategoryKey INT NULL,
+    EnglishProductName NVARCHAR(50) NULL,
+    Color NVARCHAR(15) NULL,
+    StandardCost MONEY NULL,
+    SellStartDate DATETIME NULL,
+    SellEndDate DATETIME NULL,
+    Status NVARCHAR(20) NULL
+);</code></pre>
+
+    <h3>4.4 Criação das tabelas finais do Data Warehouse</h3>
+    <pre><code>CREATE TABLE dbo.DimProduct (
+    ProductKey INT IDENTITY(1,1) PRIMARY KEY,
+    ProductAlternateKey NVARCHAR(25) NOT NULL,
+    ProductSubcategoryKey INT NULL,
+    EnglishProductName NVARCHAR(50) NULL,
+    Color NVARCHAR(15) NULL,
+    StandardCost MONEY NULL,
+    SellStartDate DATETIME NULL,
+    SellEndDate DATETIME NULL,
+    Status NVARCHAR(20) NULL
+);</code></pre>
+
+    <h3>4.5 Transformação e carga das tabelas STG</h3>
+    <pre><code>DECLARE @LoadDate DATETIME = GETDATE();
+INSERT INTO dbo.stg_DimProduct (
+    ProductAlternateKey,
+    ProductSubcategoryKey,
+    StandardCost,
+    FinishedGoodsFlag,
+    Color,
+    ListPrice,
+    SellStartDate,
+    SellEndDate
+)
+SELECT
+    p.ProductNumber,
+    p.ProductSubcategoryID,
+    p.StandardCost,
+    p.FinishedGoodsFlag,
+    p.Color,
+    p.ListPrice,
+    p.SellStartDate,
+    p.SellEndDate,
+    CASE 
+        WHEN p.SellEndDate < @LoadDate THEN 'Discontinued'
+        ELSE 'Current'
+    END
+FROM Production.Product p
+LEFT JOIN Production.ProductModel pm 
+       ON p.ProductModelID = pm.ProductModelID
+LEFT JOIN (
+    SELECT pp.ProductID, pph.LargePhoto
+    FROM Production.ProductProductPhoto pp
+    JOIN Production.ProductPhoto pph 
+         ON pp.ProductPhotoID = pph.ProductPhotoID
+) ph ON p.ProductID = ph.ProductID;</code></pre>
+
+    <h3>4.6 Carga das Dimensões usando MERGE</h3>
+    <pre><code>MERGE DimProduct AS tgt
+USING stg.DimProduct AS src
+    ON tgt.ProductAlternateKey = src.ProductAlternateKey
+WHEN MATCHED THEN
+    UPDATE SET
+        tgt.ProductSubcategoryKey = src.ProductSubcategoryKey,
+        tgt.EnglishProductName    = src.EnglishProductName,
+        tgt.Color                 = src.Color,
+        tgt.StandardCost          = src.StandardCost,
+        tgt.Status                = src.Status
+WHEN NOT MATCHED THEN
+    INSERT (
+        ProductAlternateKey,
+        ProductSubcategoryKey,
+        EnglishProductName,
+        Color,
+        StandardCost,
+        StartDate,
+        EndDate,
+        Status
+    )
+    VALUES (
+        src.ProductAlternateKey,
+        src.ProductSubcategoryKey,
+        src.EnglishProductName,
+        src.Color,
+        src.StandardCost,
+        GETDATE(),
+        '9999-12-31',
+        'Current'
+    );</code></pre>
+
+    <h3>4.7 Criação e carga da tabela de fato (FactProductInventory)</h3>
+    <pre><code>INSERT INTO dbo.FactProductInventory
+(
+    ProductKey,
+    DateKey,
+    MovementDate
+)
+SELECT 
+    dp.ProductKey,
+    dd.DateKey,
+    dd.FullDateAlternateKey AS MovementDate
+FROM dbo.DimProduct dp
+CROSS JOIN dbo.DimDate dd
+WHERE dd.FullDateAlternateKey BETWEEN '2010-01-01' AND '2014-12-31'
+ORDER BY dp.ProductKey, dd.DateKey;</code></pre>
+
+    <h3>4.8 Criação dos relacionamentos</h3>
+    <pre><code>ALTER TABLE dbo.FactProductInventory
+ADD CONSTRAINT FK_FactProductInventory_Product
+    FOREIGN KEY (ProductKey) REFERENCES dbo.DimProduct(ProductKey);
+
+ALTER TABLE dbo.FactProductInventory
+ADD CONSTRAINT FK_FactProductInventory_Date
+    FOREIGN KEY (DateKey) REFERENCES dbo.DimDate(DateKey);</code></pre>
+</div>
+
+<div class="section">
+    <h2><span class="emoji">📌</span>5. Regras de Negócio</h2>
+    <ul>
+        <li>Cada movimento pertence a um produto (ProductKey)</li>
+        <li>Cada movimento pertence a um dia específico (DateKey)</li>
+        <li>Integridade garantida via FK (ProductKey, DateKey)</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2><span class="emoji">📌</span>6. Decisões de Modelagem</h2>
+    <ul>
+        <li>Colunas de tradução (Spanish, French, etc) como NULL nas dimensões para reduzir volume e focar nos atributos necessários ao fluxo ETL.</li>
+        <li>Colunas NULL na Fact: refletindo ausência de dados completos no OLTP e para simplificar a modelagem.</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2><span class="emoji">📌</span>7. Validações Realizadas</h2>
+    <ul>
+        <li>Conferência de granularidade da Fact</li>
+        <li>Verificação de schema via <code>sp_help</code></li>
+        <li>Testes de integridade referencial (FKs)</li>
+        <li>Conferência de duplicidades</li>
+        <li>Confirmação de SKs funcionando</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2><span class="emoji">📌</span>8. Estrutura do Repositório</h2>
+    <pre>
+sql/
+│
+├── create_tables/
+│   ├── create_tables.sql
+│   └── create_tables_stg.sql
+│
+├── load/
+│   ├── load_stg_dim_product.sql
+│   ├── load_stg_dim_product_category.sql
+│   ├── load_stg_dim_product_sub_category.sql
+│   ├── load_dim_date.sql
+│   └── load_fact_product_inventory.sql
+│
+├── merge/
+│   ├── merge_dim_product.sql
+│   ├── merge_dim_product_category.sql
+│   └── merge_dim_product_sub_category.sql
+│
+└── constraints/
+    ├── fk_dim_product_product_sub_category.sql
+    ├── fk_dim_product_sub_category_category.sql
+    └── fk_fact_product_inventory.sql
+    </pre>
+</div>
+
+<div class="section">
+    <h2><span class="emoji">📌</span>9. Aprendizados</h2>
+    <ul>
+        <li>Modelagem dimensional com SQL Server</li>
+        <li>Identificar e mapear dados no OLTP para modelar o DW (OLAP)</li>
+        <li>Criação de dimensões e fato com chaves surrogate (IDENTITY)</li>
+        <li>Construção e padronização de DimDate</li>
+        <li>Processo ETL completo: extração, transformação e carga</li>
+        <li>Criação de tabelas STG e uso como camada intermediária</li>
+        <li>Uso do comando MERGE para atualizar/inserir no DW</li>
+        <li>Boas práticas de documentação para projetos de dados</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2><span class="emoji">📌</span>10. Próximos Passos</h2>
+    <ul>
+        <li>Expandir o DW para incluir novos módulos do AdventureWorks</li>
+        <li>Criar dashboards analíticos (Power BI / Tableau) consumindo este DW</li>
+    </ul>
+</div>
+
+<div class="section">
+    <h2><span class="emoji">📌</span>11. Referências</h2>
+    <p><a href="https://dataedo.com/samples/html/Data_warehouse/" target="_blank">https://dataedo.com/samples/html/Data_warehouse/</a></p>
+</div>
+
+<div class="section">
+    <h2><span class="emoji">📌</span>12. Autor</h2>
+    <p>Leonardo Bonani<br>
+    Contato: <a href="https://www.linkedin.com/in/leonardo-bonani" target="_blank">www.linkedin.com/in/leonardo-bonani</a></p>
+</div>
+
+</body>
+</html>
