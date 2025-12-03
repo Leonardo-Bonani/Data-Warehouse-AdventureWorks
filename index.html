@@ -5,7 +5,7 @@
     <title>Recriando o Módulo Inventory - DW AdventureWorks</title>
     
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
     
@@ -65,7 +65,7 @@
             margin-bottom: 15px;
         }
 
-        pre {
+        pre [class*="language-"] {
             background-color: #f0f0f0;
             padding: 15px;
             border-left: 4px solid #222222;
@@ -73,9 +73,11 @@
             margin-bottom: 15px;
         }
 
-        code  {
+        code [class*="language-"] {
             font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
-            background-color: #f0f0f0;
+            background-color: #f0f0f0 !important;
+            color: #111 !important;
+            text-shadow: none !important;
             padding: 2px 4px;
             border-radius: 3px;
         }
