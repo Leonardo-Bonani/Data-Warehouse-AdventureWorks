@@ -15,3 +15,9 @@ CROSS JOIN dbo.DimDate dd
 WHERE dd.FullDateAlternateKey BETWEEN '2010-01-01' AND '2014-12-31'
 ORDER BY dp.ProductKey, dd.DateKey;
 
+-- dados coluna UnitCost
+UPDATE f
+SET f.UnitCost = dp.StandardCost
+FROM dbo.FactProductInventory f
+JOIN dbo.DimProduct dp 
+    ON f.ProductKey = dp.ProductKey;
