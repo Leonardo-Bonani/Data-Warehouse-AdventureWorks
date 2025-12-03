@@ -314,7 +314,10 @@ sql/
 │   ├── merge_dim_product_category.sql
 │   └── merge_dim_product_sub_category.sql
 │
-└──
+└── constraints/
+    ├── fk_dim_product_product_sub_category.sql
+    ├── fk_dim_product_sub_category_category.sql
+    └──  fk_fact_product_inventory.sql
     
  </pre>
 
