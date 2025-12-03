@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Recriando o Modulo Inventory - DW AdventureWorks</title>
+    <title>Recriando o Módulo Inventory - DW AdventureWorks</title>
 
     <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.js"></script>
@@ -17,7 +17,7 @@
         }
 
         body {
-            font-family: 'Merriweather', Georgia, serif;
+            font-family: 'source-serif-pro, Georgia, Cambria, "Times New Roman", Times, serif;
             line-height: 1.6;
             background-color: #ffffff;
             color: #222222;
@@ -27,18 +27,21 @@
         }
 
         h1, h2, h3, h4 {
-            font-family: 'Work Sans', Helvetica, Arial, sans-serif;
+            font-family: sohne, "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-weight: bold;
             color: #111111;
             margin-bottom: 10px;
         }
 
-        h1 {
+        h1 {    
+            box-sizing: border-box;
+            display: inline;
             font-size: 2.2em;
             margin-bottom: 20px;
         }
 
         h2 {
-            font-size: 1.8em;
+            font-size: 1.7em;
             margin-top: 30px;
             margin-bottom: 15px;
         }
@@ -59,7 +62,7 @@
         }
 
         pre {
-            background-color: #f6f8fa;
+            background-color: ##f0f0f0;
             padding: 15px;
             border-left: 4px solid #222222;
             overflow-x: auto;
@@ -105,7 +108,7 @@
 </head>
 <body>
 
-<h1>Recriando o Modulo Inventory do Data Warehouse AdventureWorks 2022</h1>
+<h1>Recriando o Módulo Inventory do Data Warehouse AdventureWorks 2022</h1>
 
 <div class="section">
     <h2><span class="emoji">📌</span>1. Objetivo do projeto</h2>
@@ -126,7 +129,7 @@
     <ul>
         <li>SQL Server</li>
         <li>SQL Server Management Studio (SSMS)</li>
-        <li>AdventureWorks 2022 OLTP (<a href="https://github.com/Microsoft/sql-server-samples/releases/download/adventureworks/AdventureWorks2022.bak" target="_blank">link do backup</a>)</li>
+        <li>AdventureWorks 2022 OLTP (<a href="https://github.com/Microsoft/sql-server-samples/releases/download/adventureworks/AdventureWorks2022.bak" target="_blank">link para download</a>)</li>
     </ul>
 </div>
 
@@ -152,15 +155,16 @@
 
     <h3>4.1 Localização e seleção dos dados no OLTP para compor o DW</h3>
     <ul>
-        <li>A estrutura do Data Warehouse original do AdventureWorks foi analisada usando como referencia: <a href="https://dataedo.com/samples/html/Data_warehouse/" target="_blank">link</a></li>
+        <li>A estrutura do Data Warehouse original do AdventureWorks foi analisada usando como referencia: <a href="https://dataedo.com/samples/html/Data_warehouse/" target="_blank">https://dataedo.com/</a></li>
         <li>As tabelas do OLTP com dados relevantes para a construção do módulo Inventory foram mapeadas.</li>
         <li>Chaves primárias e os relacionamentos do modelo transacional foram identificados.</li>
     </ul>
 
     <h3>4.2 Criação da tabela DimDate</h3>
-    <p>A primeira estrutura criada foi a DimDate, responsável por padronizar todas as datas usadas no DW.</p>
+    <p>A primeira estrutura criada foi a DimDate, responsável por padronizar todas as datas usadas no DW.</p><br>
+    <p>Exemplo resumido da estrutura:</p>
     <pre><code class="language-sql">
-        CREATE TABLE dbo.DimDate (
+    CREATE TABLE dbo.DimDate (
     DateKey INT PRIMARY KEY,
     FullDate DATE NOT NULL,
     DayNumberOfWeek TINYINT,
@@ -170,9 +174,11 @@
 );</code></pre>
 
     <h3>4.3 Criação das tabelas de Staging (STG)</h3>
-    <p>Foram criadas tabelas intermediárias (staging) para as Dimensões para receber os dados brutos vindos do OLTP.</p>
+    <p>Foram criadas tabelas intermediárias (staging) para as Dimensões para receber os dados brutos vindos do OLTP.</p><br>
+    <p>Essas tabelas serviram como camada temporária para armazenar, padronizar e validar os dados antes de carregá-los no DW.</p><br>
+    <p>Exemplo resumido da estrutura da STG de DimProduct:</p>
     <pre><code class="language-sql">
-        CREATE TABLE stg.DimProduct (
+    CREATE TABLE stg.DimProduct (
     ProductAlternateKey NVARCHAR(25) NOT NULL,
     ProductSubcategoryKey INT NULL,
     EnglishProductName NVARCHAR(50) NULL,
@@ -184,8 +190,10 @@
 );</code></pre>
 
     <h3>4.4 Criação das tabelas finais do Data Warehouse</h3>
+    <p>Após a camada STG, foram criadas as tabelas dimensionais finais. Essas tabelas foram preparadas com suas surrogate keys, tipos de dados definitivos e a estrutura final do Schema.</p><br>
+    <p>Exemplo resumido da estrutura da DimProduct:</p><br>
     <pre><code class="language-sql">
-        CREATE TABLE dbo.DimProduct (
+    CREATE TABLE dbo.DimProduct (
     ProductKey INT IDENTITY(1,1) PRIMARY KEY,
     ProductAlternateKey NVARCHAR(25) NOT NULL,
     ProductSubcategoryKey INT NULL,
@@ -198,101 +206,135 @@
 );</code></pre>
 
     <h3>4.5 Transformação e carga das tabelas STG</h3>
+    <p>Os dados foram carregados na camada STG utilizando processos de transform/load, incluindo:</p><br>
+    <ul>
+        <li>Ajuste de tipos</li>
+        <li>Seleção das colunas relevantes</li>
+        <li>Padronização de dados</li>
+        <li>Preparação para integridade referencial</li>
+    </ul>
+    
+    <p>Exemplo resumido do Load da DimProduct:</p>
     <pre><code class="language-sql">
-        DECLARE @LoadDate DATETIME = GETDATE();
-INSERT INTO dbo.stg_DimProduct (
-    ProductAlternateKey,
-    ProductSubcategoryKey,
-    StandardCost,
-    FinishedGoodsFlag,
-    Color,
-    ListPrice,
-    SellStartDate,
-    SellEndDate
-)
-SELECT
-    p.ProductNumber,
-    p.ProductSubcategoryID,
-    p.StandardCost,
-    p.FinishedGoodsFlag,
-    p.Color,
-    p.ListPrice,
-    p.SellStartDate,
-    p.SellEndDate,
-    CASE 
-        WHEN p.SellEndDate < @LoadDate THEN 'Discontinued'
-        ELSE 'Current'
-    END
-FROM Production.Product p
-LEFT JOIN Production.ProductModel pm 
-       ON p.ProductModelID = pm.ProductModelID
-LEFT JOIN (
-    SELECT pp.ProductID, pph.LargePhoto
-    FROM Production.ProductProductPhoto pp
-    JOIN Production.ProductPhoto pph 
-         ON pp.ProductPhotoID = pph.ProductPhotoID
-) ph ON p.ProductID = ph.ProductID;</code></pre>
-
-    <h3>4.6 Carga das Dimensões usando MERGE</h3>
-    <pre><code class="language-sql">
-        MERGE DimProduct AS tgt
-USING stg.DimProduct AS src
-    ON tgt.ProductAlternateKey = src.ProductAlternateKey
-WHEN MATCHED THEN
-    UPDATE SET
-        tgt.ProductSubcategoryKey = src.ProductSubcategoryKey,
-        tgt.EnglishProductName    = src.EnglishProductName,
-        tgt.Color                 = src.Color,
-        tgt.StandardCost          = src.StandardCost,
-        tgt.Status                = src.Status
-WHEN NOT MATCHED THEN
-    INSERT (
+    DECLARE @LoadDate DATETIME = GETDATE();
+    INSERT INTO dbo.stg_DimProduct (
         ProductAlternateKey,
         ProductSubcategoryKey,
-        EnglishProductName,
-        Color,
         StandardCost,
-        StartDate,
-        EndDate,
-        Status
+        FinishedGoodsFlag,
+        Color,
+        ListPrice,
+        SellStartDate,
+        SellEndDate
     )
-    VALUES (
-        src.ProductAlternateKey,
-        src.ProductSubcategoryKey,
-        src.EnglishProductName,
-        src.Color,
-        src.StandardCost,
-        GETDATE(),
-        '9999-12-31',
-        'Current'
-    );</code></pre>
+    SELECT
+        p.ProductNumber,
+        p.ProductSubcategoryID,
+        p.StandardCost,
+        p.FinishedGoodsFlag,
+        p.Color,
+        p.ListPrice,
+        p.SellStartDate,
+        p.SellEndDate,
+        CASE 
+            WHEN p.SellEndDate < @LoadDate THEN 'Discontinued'
+            ELSE 'Current'
+        END
+    FROM Production.Product p
+    LEFT JOIN Production.ProductModel pm 
+           ON p.ProductModelID = pm.ProductModelID
+    LEFT JOIN (
+        SELECT pp.ProductID, pph.LargePhoto
+        FROM Production.ProductProductPhoto pp
+        JOIN Production.ProductPhoto pph 
+             ON pp.ProductPhotoID = pph.ProductPhotoID
+    ) ph ON p.ProductID = ph.ProductID;</code></pre>
+
+    <h3>4.6 Carga das Dimensões usando MERGE</h3>
+    <p>Com as tabelas STG prontas, para realmente simular um DW sendo atualizado com novos dados, as dimensões finais foram alimentadas usando comandos MERGE, que permite:</p><br>
+    <ul>
+        <li>Inserir registros novos</li>
+        <li>Evitar duplicidades</li>
+        <li>Sincronizar as dimensões com as tabelas de origem</li>
+    </ul>
+    
+    <p>Exemplo resumido do MERGE da DimProduct:</p>
+    
+    <pre><code class="language-sql">
+    MERGE DimProduct AS tgt
+    USING stg.DimProduct AS src
+        ON tgt.ProductAlternateKey = src.ProductAlternateKey
+    WHEN MATCHED THEN
+        UPDATE SET
+            tgt.ProductSubcategoryKey = src.ProductSubcategoryKey,
+            tgt.EnglishProductName    = src.EnglishProductName,
+            tgt.Color                 = src.Color,
+            tgt.StandardCost          = src.StandardCost,
+            tgt.Status                = src.Status
+    WHEN NOT MATCHED THEN
+        INSERT (
+            ProductAlternateKey,
+            ProductSubcategoryKey,
+            EnglishProductName,
+            Color,
+            StandardCost,
+            StartDate,
+            EndDate,
+            Status
+        )
+        VALUES (
+            src.ProductAlternateKey,
+            src.ProductSubcategoryKey,
+            src.EnglishProductName,
+            src.Color,
+            src.StandardCost,
+            GETDATE(),
+            '2014-12-31',
+            'Current'
+        );</code></pre>
 
     <h3>4.7 Criação e carga da tabela de fato (FactProductInventory)</h3>
+    <p>Diferente das dimensões, a Fact foi criada sem passar pela camada STG, para simplificar o processo. Ela foi carregada diretamente com um INSERT + JOIN entre:</p><br>
+    <ul>
+        <li>DimProduct</li>
+        <li>DimDate</li>
+    </ul>
+    
+    <p>Exemplo resumido da Carga da Fact:</p>
     <pre><code class="language-sql">
-        INSERT INTO dbo.FactProductInventory
-(
-    ProductKey,
-    DateKey,
-    MovementDate
-)
-SELECT 
-    dp.ProductKey,
-    dd.DateKey,
-    dd.FullDateAlternateKey AS MovementDate
-FROM dbo.DimProduct dp
-CROSS JOIN dbo.DimDate dd
-WHERE dd.FullDateAlternateKey BETWEEN '2010-01-01' AND '2014-12-31'
-ORDER BY dp.ProductKey, dd.DateKey;</code></pre>
+    INSERT INTO dbo.FactProductInventory
+    (
+        ProductKey,
+        DateKey,
+        MovementDate
+    )
+    SELECT 
+        dp.ProductKey,
+        dd.DateKey,
+        dd.FullDateAlternateKey AS MovementDate
+    FROM dbo.DimProduct dp
+    CROSS JOIN dbo.DimDate dd
+    WHERE dd.FullDateAlternateKey BETWEEN '2010-01-01' AND '2014-12-31'
+    ORDER BY dp.ProductKey, dd.DateKey;</code></pre>
 
     <h3>4.8 Criação dos relacionamentos</h3>
+        <p>Por fim, foram criados os relacionamentos entre:</p><br>
+    <ul>
+        <li>FactProductInventory -> DimProduct</li>
+        <li>FactProductInventory -> DimDate</li>
+        <li>DimProduct -> DimProductSubcategory</li>
+        <li>DimProductSubcategory -> DimProductCategory</li>
+    </ul>
+    
+    <p>Exemplo do relacionamento - DimDate <- FactProductInventory -> DimProduct:</p>
     <pre><code class="language-sql">
-        ALTER TABLE dbo.FactProductInventory
-ADD CONSTRAINT FK_FactProductInventory_Product
-    FOREIGN KEY (ProductKey) REFERENCES dbo.DimProduct(ProductKey);
-
-ALTER TABLE dbo.FactProductInventory
-ADD CONSTRAINT FK_FactProductInventory_Date
-    FOREIGN KEY (DateKey) REFERENCES dbo.DimDate(DateKey);</code></pre>
+            ALTER TABLE dbo.FactProductInventory
+    ADD CONSTRAINT FK_FactProductInventory_Product
+        FOREIGN KEY (ProductKey) REFERENCES dbo.DimProduct(ProductKey);
+    
+    ALTER TABLE dbo.FactProductInventory
+    ADD CONSTRAINT FK_FactProductInventory_Date
+        FOREIGN KEY (DateKey) REFERENCES dbo.DimDate(DateKey);</code></pre>
 </div>
 
 <div class="section">
@@ -324,31 +366,12 @@ ADD CONSTRAINT FK_FactProductInventory_Date
 </div>
 
 <div class="section">
-    <h2><span class="emoji">📌</span>8. Estrutura do Repositório</h2>
-    <pre>
-sql/
-│
-├── create_tables/
-│   ├── create_tables.sql
-│   └── create_tables_stg.sql
-│
-├── load/
-│   ├── load_stg_dim_product.sql
-│   ├── load_stg_dim_product_category.sql
-│   ├── load_stg_dim_product_sub_category.sql
-│   ├── load_dim_date.sql
-│   └── load_fact_product_inventory.sql
-│
-├── merge/
-│   ├── merge_dim_product.sql
-│   ├── merge_dim_product_category.sql
-│   └── merge_dim_product_sub_category.sql
-│
-└── constraints/
-    ├── fk_dim_product_product_sub_category.sql
-    ├── fk_dim_product_sub_category_category.sql
-    └── fk_fact_product_inventory.sql
-    </pre>
+
+    <h2><span class="emoji">📌</span>8. Repositório</h2>
+    <p> O repositório com o projeto completo está em:</p><br>
+    <p><a href="https://github.com/Leonardo-Bonani/Recriando-o-Modulo-Inventory-do-Data-Warehouse-AdventureWork-2022/tree/main" target="Recriando o Módulo Inventory do Data Warehouse AdventureWork 2022/">/</a></p>
+    
+ 
 </div>
 
 <div class="section">
