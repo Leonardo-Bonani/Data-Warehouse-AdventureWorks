@@ -1,8 +1,6 @@
 
 TRUNCATE TABLE dbo.stg_DimProduct;
 
-DECLARE @LoadDate DATETIME = GETDATE();
-
 INSERT INTO dbo.stg_DimProduct
 (
     ProductAlternateKey,
@@ -77,7 +75,7 @@ SELECT
     p.SellStartDate,
     p.SellEndDate,
     CASE
-        WHEN p.SellEndDate IS NOT NULL AND p.SellEndDate < @LoadDate THEN 'Discontinued'
+        WHEN p.SellEndDate IS NOT NULL AND p.SellEndDate < GETDATE() THEN 'Discontinued'
         ELSE 'Current'
     END AS Status
 FROM
