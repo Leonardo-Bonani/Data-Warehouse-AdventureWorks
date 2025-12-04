@@ -129,7 +129,6 @@ Exemplo resumido do Load da DimProduct:
 
 ```sql
 
-DECLARE @LoadDate DATETIME = GETDATE();
 INSERT INTO dbo.stg_DimProduct (
     ProductAlternateKey,
     ProductSubcategoryKey,
@@ -150,7 +149,7 @@ SELECT
     p.SellStartDate,
     p.SellEndDate,
     CASE 
-        WHEN p.SellEndDate < @LoadDate THEN 'Discontinued'
+        WHEN p.SellEndDate < GETDATE() THEN 'Discontinued'
         ELSE 'Current'
     END
 FROM Production.Product p
