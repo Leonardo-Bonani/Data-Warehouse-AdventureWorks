@@ -21,46 +21,46 @@
             font-size: 20px; 
             line-height: 1.7;
             background: #fafafa;
-            color: #111;
+            color: #333;
             
             max-width: 840px;   
             margin: 60px auto;
             padding: 0 24px;   
             box-sizing: border-box;
         }
+            
+            header {
+              padding: 20px 40px;
+              background: white;
+              border-bottom: 1px solid #eee;
+              position: sticky;
+              top: 0;
+            }
+            
+            .header-container {
+              max-width: 720px;   
+              margin: 0 auto;     
+              display: flex;
+              flex-direction: column; 
+            }
+            
+            header h1 {
+              margin: 0;
+              font-size: 42px;
+              font-weight: 700;
+            }
+            
+            .github-link {
+              color: inherit;
+              text-decoration: none;
+              font-size: 18px;
+              margin-top: 8px;
+            }
+            
+            .github-link:hover {
+              text-decoration: underline;
+            }
 
-        header {
-            font-family: "Segoe UI", Arial, sans-serif;
-            padding: 20px 40px;
-            background: white;
-            border-bottom: 1px solid #eee;
-            position: sticky;
-            top: 0;
-        }
-        
-        .header-container {
-            max-width: 720px;   
-            margin: 0 auto;     
-            display: flex;
-            flex-direction: column; 
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 42px;
-            font-weight: 700;
-        }
-        
-        .github-link {
-          color: #333;
-          font-size: 18px;
-          margin-top: 8px;
-          text-decoration: none;
-        }
-        
-        .github-link:hover {
-          text-decoration: underline;
-        }
 
         h1, h2, h3 {
             font-family: 'Inter', sans-serif;
@@ -166,13 +166,6 @@
     <a href="https://leonardo-bonani.github.io/leonardobonani.github.io/" class="github-link">
   ⬅ Voltar ao Menu
     </a>
-  </div>
-</header>
-
-<header>
-  <div class="header-container">
-    <h1>Meus Projetos</h1>
-    <a href="index.html" class="github-link">Voltar ao Menu</a>
   </div>
 </header>
 
