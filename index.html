@@ -1,174 +1,154 @@
-1<!DOCTYPE html>
+
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <title>Recriando o Módulo Inventory - DW AdventureWorks</title>
-    
+
     <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-sql.min.js"></script>
-    
-    <style>
+
+<style>
 
 
-            body {
-            font-family: "Segoe UI", Arial, sans-serif;
-            font-size: 20px; 
-            line-height: 1.7;
-            background: #fafafa;
-            color: #333;
-            
-            max-width: 840px;   
-            margin: 60px auto;
-            padding: 0 24px;  
-            box-sizing: border-box;
-        }
-
-            
-            header {
-              padding: 20px 40px;
-              background: white;
-              border-bottom: 1px solid #eee;
-              position: sticky;
-              top: 0;
-            }
-            
-            .header-container {
-              max-width: 720px;   
-              margin: 0 auto;     
-              display: flex;
-              flex-direction: column; 
-            }
-            
-            header h1 {
-              margin: 0;
-              font-size: 42px;
-              font-weight: 700;
-            }
-            
-            .github-link {
-              color: inherit;
-              text-decoration: none;
-              font-size: 18px;
-              margin-top: 8px;
-            }
-            
-            .github-link:hover {
-              text-decoration: underline;
-            }
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 20px;
+  line-height: 1.6;
+  background: #fafafa;
+  color: #333;
+  box-sizing: border-box;
+}
 
 
-        h1, h2, h3 {
-            font-family: 'Inter', sans-serif;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            line-height: 1.25;
-            padding-bottom: 20px;
-            margin-top: 48px;
-            position: relative;
+.content {
+  max-width: 840px;
+  margin: 60px auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+  background: transparent;
+}
 
-        }
-        
-        h1 {    
-            box-sizing: border-box;
-            font-size: 42px; 
-            margin-bottom: 60px;
-        }
-
-
-        h2 {
-            font-size: 32px;
-            margin-top: 30px;
-        }
+.card {
+    background: #ffffff;   
+    border-radius: 12px;  
+    padding: 20px;       
+    margin-bottom: 30px;  
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+}
 
 
-        h3 {
-            font-size: 26px;
-            margin-top: 40px;
-        }
+.main-container {
+  max-width: 840px;
+  margin: 60px auto;
+}
 
 
-        p {
-            margin-bottom: 15px;
-        }
+header {
+  padding: 20px 40px;
+  background: white;
+  border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 10;
+}
 
-        ul, ol {
-            margin-left: 20px;
-            margin-bottom: 15px;
-        }
+.header-container {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
 
-        pre  {
-            background-color: #f0f0f0;
-            padding: 15px;
-            border-left: 4px solid #222222;
-            overflow-x: auto;
-            margin-bottom: 15px;
-        }
+header h1 {
+  margin: 0;
+  font-size: 42px;
+  font-weight: 700;
+}
 
-        code {
-            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace;
-            font-size: 18px; 
-            padding: 2px 4px;
-            border-radius: 3px;
-        }
+.github-link {
+  color: inherit;
+  text-decoration: none;
+  font-size: 18px;
+  margin-top: 8px;
+}
 
-        a {
-            color: #1a0dab;
-            text-decoration: none;
-        }
+.github-link:hover {
+  text-decoration: underline;
+}
 
-        a:hover {
-            text-decoration: underline;
-        }
 
-        img {
-            max-width: 100%;
-            display: block;
-            margin: 20px 0;
-        }
 
-        hr {
-            border: 0;
-            border-top: 1px solid #ccc;
-            margin: 30px 0;
-        }
+h1, h2, h3 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    margin-top: 48px;
+}
 
-               .section {
-            margin-bottom: 60px;
-            padding-bottom: 40px;
-            position: relative;
-        }
-        
-        .section::after {
-            content: "";
-            position: absolute;
-            left: 50%;
-            bottom: 0;
-            transform: translateX(-50%);
-            width: 160px; /* tamanho do separador */
-            height: 2px;
-            background: rgba(0,0,0,0.12);
-            border-radius: 2px;
-        }
+h1 {
+  font-size: 42px;
+  margin-bottom: 60px;
+}
 
-    </style>
+h2 { font-size: 32px; }
+h3 { font-size: 26px; }
+
+.section {
+  margin-bottom: 60px;
+  padding-bottom: 40px;
+  position: relative;
+}
+
+.section::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 160px;
+  height: 2px;
+  background: rgba(0,0,0,0.12);
+  border-radius: 2px;
+}
+
+pre {
+  background: #f0f0f0;
+  padding: 15px;
+  border-left: 4px solid #222;
+  overflow-x: auto;
+}
+
+code { font-size: 18px; }
+
+a { color: #1a0dab; }
+a:hover { text-decoration: underline; }
+
+img { max-width: 100%; margin: 20px 0; display: block; }
+
+</style>
 </head>
 <body>
-
 
 <header>
   <div class="header-container">
     <h1>Meus Projetos</h1>
-    <a href="https://leonardo-bonani.github.io/leonardobonani.github.io/" class="github-link">
-  ⬅ Voltar ao Menu
-    </a>
+    <a href="https://leonardo-bonani.github.io/leonardobonani.github.io/" class="github-link">⬅ Voltar ao Menu</a>
   </div>
 </header>
 
-    
+
+
+<main class="content">
+
 <h1>Recriando o Módulo Inventory do Data Warehouse AdventureWorks 2022</h1>
 
-<div class="section">
+
+<div class="card">  
     <h2>1. Objetivo do projeto</h2>
     <p>Construir um Data Warehouse para o módulo Inventory do AdventureWorks 2022, replicando o fluxo OLTP → DW para permitir análises históricas e métricas de inventário de modo simplificado.</p>
     <p>Este projeto foi desenvolvido com foco em:</p>
@@ -182,7 +162,7 @@
     </ul>
 </div>
 
-<div class="section">
+<div class="card">  
     <h2>2. Ferramentas Utilizadas</h2>
     <ul>
         <li>SQL Server</li>
@@ -191,7 +171,7 @@
     </ul>
 </div>
 
-<div class="section">
+<div class="card">  
     <h2>3. Arquitetura do Projeto</h2>
     <p>O DW foi construído seguindo um modelo dimensional no formato Star Schema, porém com características de Snowflake também, por conta da hierarquia de produtos.</p>
     <p><strong>Tabelas de Dimensão:</strong></p>
@@ -208,7 +188,7 @@
     <img src="./docs/Modelo_Dimensional.png" alt="Resultado final do Modelo Dimensional">
 </div>
 
-<div class="section">
+<div class="card">  
     <h2>4. Etapas</h2>
 
     <h3>4.1 Localização e seleção dos dados no OLTP para compor o DW</h3>
@@ -394,7 +374,7 @@
         FOREIGN KEY (DateKey) REFERENCES dbo.DimDate(DateKey);</code></pre>
 </div>
 
-<div class="section">
+<div class="card">  
     <h2>5. Regras de Negócio</h2>
     <ul>
         <li>Cada movimento pertence a um produto (ProductKey)</li>
@@ -403,7 +383,7 @@
     </ul>
 </div>
 
-<div class="section">
+<div class="card">  
     <h2>6. Decisões de Modelagem</h2>
     <ul>
         <li>Colunas de tradução (Spanish, French, etc) como NULL nas dimensões para reduzir volume e focar nos atributos necessários ao fluxo ETL.</li>
@@ -411,7 +391,7 @@
     </ul>
 </div>
 
-<div class="section">
+<div class="card">  
     <h2>7. Validações Realizadas</h2>
     <ul>
         <li>Conferência de granularidade da Fact</li>
@@ -422,7 +402,7 @@
     </ul>
 </div>
 
-<div class="section">
+<div class="card">  
 
     <h2>8. Repositório</h2>
     <p> O repositório com o projeto completo está em:</p>
@@ -430,7 +410,7 @@
  
 </div>
 
-<div class="section">
+<div class="card">  
     <h2>9. Aprendizados</h2>
     <ul>
         <li>Modelagem dimensional com SQL Server</li>
@@ -444,7 +424,7 @@
     </ul>
 </div>
 
-<div class="section">
+<div class="card">  
     <h2>10. Próximos Passos</h2>
     <ul>
         <li>Expandir o DW para incluir novos módulos do AdventureWorks</li>
@@ -452,7 +432,7 @@
     </ul>
 </div>
 
-<div class="section">
+<div class="card">  
     <h2>11. Referências</h2>
     <ul>
         <li><a href="https://dataedo.com/samples/html/Data_warehouse/" target="_blank">https://dataedo.com/samples/html/Data_warehouse/</a></li>
@@ -460,11 +440,12 @@
 
 </div>
 
-<div class="section">
+<div class="card">  
     <h2>12. Autor</h2>
     <p>Leonardo Bonani<br>
     Contato: <a href="https://www.linkedin.com/in/leonardo-bonani" target="_blank">www.linkedin.com/in/leonardo-bonani</a></p>
 </div>
+</main>
 
 </body>
 </html>
